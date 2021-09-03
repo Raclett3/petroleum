@@ -1,0 +1,11 @@
+[package]
+name = "petroleum"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+twilight-gateway = "0.6"
+twilight-http = "0.6"
+twilight-model = "0.6"
+futures = "0.3"
+tokio = {version = "1.11", features = ["macros", "rt"]}
