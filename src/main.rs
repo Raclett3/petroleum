@@ -1,9 +1,10 @@
+mod handler;
+
 use futures::StreamExt;
+use handler::ping::ping;
+use handler::Bot;
 use std::{env, error::Error};
-use twilight_gateway::{
-    cluster::{Cluster, ShardScheme},
-    Event,
-};
+use twilight_gateway::cluster::{Cluster, ShardScheme};
 use twilight_http::Client;
 use twilight_model::gateway::Intents;
 
@@ -24,22 +25,17 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     let http = Client::new(token);
 
+    let mut handler = Bot::new();
+    handler.on_message(ping);
+
     while let Some((_, event)) = events.next().await {
-        tokio::spawn(handle_event(event, http.clone()));
-    }
-
-    Ok(())
-}
-
-async fn handle_event(event: Event, http: Client) -> Result<(), Box<dyn Error + Send + Sync>> {
-    match event {
-        Event::MessageCreate(msg) if msg.content == "ping?" => {
-            http.create_message(msg.channel_id)
-                .content("pong!")?
+        let messages = handler.handle(event);
+        for message in messages {
+            http.create_message(message.channel_id.into())
+                .content(&message.content)?
                 .exec()
                 .await?;
         }
-        _ => {}
     }
 
     Ok(())
