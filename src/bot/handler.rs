@@ -16,14 +16,22 @@ pub struct Context {
 
 #[async_trait]
 pub trait MessageHandler {
-    async fn on_message(&self, message: &Message, context: &Context) -> Result<(), Box<dyn Error>>;
+    async fn on_message(
+        &mut self,
+        message: &Message,
+        context: &Context,
+    ) -> Result<(), Box<dyn Error>>;
 }
 
-pub struct FnMessageHandler<T: Fn(&Message) -> Option<Message> + Send + Sync>(pub T);
+pub struct FnMessageHandler<T: FnMut(&Message) -> Option<Message> + Send + Sync>(pub T);
 
 #[async_trait]
-impl<T: Fn(&Message) -> Option<Message> + Send + Sync> MessageHandler for FnMessageHandler<T> {
-    async fn on_message(&self, message: &Message, context: &Context) -> Result<(), Box<dyn Error>> {
+impl<T: FnMut(&Message) -> Option<Message> + Send + Sync> MessageHandler for FnMessageHandler<T> {
+    async fn on_message(
+        &mut self,
+        message: &Message,
+        context: &Context,
+    ) -> Result<(), Box<dyn Error>> {
         if let Some(reply) = self.0(message) {
             context.callbacks.send_message(reply).await
         } else {

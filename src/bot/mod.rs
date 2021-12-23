@@ -26,11 +26,11 @@ impl<'a> Bot<'a> {
         self.message_handlers.push(Box::new(handler))
     }
 
-    pub async fn handle(&self, event: Event) {
+    pub async fn handle(&mut self, event: Event) {
         match event {
             Event::MessageCreate(msg) => {
                 let msg = msg.0.into();
-                for handler in self.message_handlers.iter() {
+                for handler in self.message_handlers.iter_mut() {
                     if let Err(error) = handler.on_message(&msg, &self.context).await {
                         println!("[ERROR] {}", error);
                     }
