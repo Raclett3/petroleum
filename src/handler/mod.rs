@@ -1,5 +1,8 @@
 pub mod ping;
 
+use async_trait::async_trait;
+use std::error::Error;
+use std::sync::Arc;
 use twilight_gateway::Event;
 use twilight_model::channel::Message as DiscordMessage;
 
@@ -27,40 +30,65 @@ impl From<DiscordMessage> for Message {
     }
 }
 
-pub trait MessageHandler {
-    fn on_message(&self, message: &Message) -> Option<Message>;
+pub struct Context {
+    callbacks: Arc<dyn ResponseCallbacks>,
 }
 
-impl<T: Fn(&Message) -> Option<Message>> MessageHandler for T {
-    fn on_message(&self, message: &Message) -> Option<Message> {
-        self(message)
+#[async_trait]
+pub trait MessageHandler {
+    async fn on_message(&self, message: &Message, context: &Context) -> Result<(), Box<dyn Error>>;
+}
+
+pub struct FnMessageHandler<T: Fn(&Message) -> Option<Message> + Send + Sync>(pub T);
+
+#[async_trait]
+impl<T: Fn(&Message) -> Option<Message> + Send + Sync> MessageHandler for FnMessageHandler<T> {
+    async fn on_message(&self, message: &Message, context: &Context) -> Result<(), Box<dyn Error>> {
+        if let Some(reply) = self.0(message) {
+            context.callbacks.send_message(reply).await
+        } else {
+            Ok(())
+        }
     }
 }
 
-#[derive(Default)]
+#[async_trait]
+pub trait ResponseCallbacks: Send + Sync {
+    async fn send_message(&self, _: Message) -> Result<(), Box<dyn Error>> {
+        Ok(())
+    }
+}
+
 pub struct Bot<'a> {
     message_handlers: Vec<Box<dyn MessageHandler + 'a>>,
+    context: Context,
 }
 
 impl<'a> Bot<'a> {
-    pub fn new() -> Self {
-        Bot::default()
+    pub fn new<T: ResponseCallbacks + 'static>(callbacks: T) -> Self {
+        Bot {
+            message_handlers: Vec::new(),
+            context: Context {
+                callbacks: Arc::new(callbacks),
+            },
+        }
     }
 
     pub fn on_message(&mut self, handler: impl MessageHandler + 'a) {
         self.message_handlers.push(Box::new(handler))
     }
 
-    pub fn handle(&self, event: Event) -> Vec<Message> {
+    pub async fn handle(&self, event: Event) {
         match event {
             Event::MessageCreate(msg) => {
-                let msg = msg.0;
-                self.message_handlers
-                    .iter()
-                    .flat_map(|handler| handler.on_message(&msg.clone().into()))
-                    .collect()
+                let msg = msg.0.into();
+                for handler in self.message_handlers.iter() {
+                    if let Err(error) = handler.on_message(&msg, &self.context).await {
+                        println!("[ERROR] {}", error);
+                    }
+                }
             }
-            _ => vec![],
+            _ => (),
         }
     }
 }

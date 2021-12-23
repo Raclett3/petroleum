@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
+async-trait = "0.1"
 twilight-gateway = "0.6"
 twilight-http = "0.6"
 twilight-model = "0.6"

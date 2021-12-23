@@ -1,12 +1,33 @@
 mod handler;
 
+use async_trait::async_trait;
 use futures::StreamExt;
 use handler::ping::ping;
 use handler::Bot;
+use handler::FnMessageHandler;
+use handler::Message;
+use handler::ResponseCallbacks;
 use std::{env, error::Error};
 use twilight_gateway::cluster::{Cluster, ShardScheme};
 use twilight_http::Client;
 use twilight_model::gateway::Intents;
+
+struct Callbacks {
+    http: Client,
+}
+
+#[async_trait]
+impl ResponseCallbacks for Callbacks {
+    async fn send_message(&self, message: Message) -> Result<(), Box<dyn Error>> {
+        self.http
+            .create_message(message.channel_id.into())
+            .content(&message.content)?
+            .exec()
+            .await?;
+
+        Ok(())
+    }
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
@@ -25,17 +46,11 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     let http = Client::new(token);
 
-    let mut handler = Bot::new();
-    handler.on_message(ping);
+    let mut handler = Bot::new(Callbacks { http: http.clone() });
+    handler.on_message(FnMessageHandler(ping));
 
     while let Some((_, event)) = events.next().await {
-        let messages = handler.handle(event);
-        for message in messages {
-            http.create_message(message.channel_id.into())
-                .content(&message.content)?
-                .exec()
-                .await?;
-        }
+        handler.handle(event).await;
     }
 
     Ok(())
