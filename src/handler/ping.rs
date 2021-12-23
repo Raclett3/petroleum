@@ -1,4 +1,4 @@
-use super::Message;
+use crate::bot::Message;
 
 pub fn ping(message: &Message) -> Option<Message> {
     if message.content == "ping?" {

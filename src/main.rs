@@ -1,12 +1,13 @@
+mod bot;
 mod handler;
 
 use async_trait::async_trait;
+use bot::Bot;
+use bot::FnMessageHandler;
+use bot::Message;
+use bot::ResponseCallbacks;
 use futures::StreamExt;
 use handler::ping::ping;
-use handler::Bot;
-use handler::FnMessageHandler;
-use handler::Message;
-use handler::ResponseCallbacks;
 use std::{env, error::Error};
 use twilight_gateway::cluster::{Cluster, ShardScheme};
 use twilight_http::Client;
