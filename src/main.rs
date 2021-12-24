@@ -7,7 +7,7 @@ use bot::FnMessageHandler;
 use bot::Message;
 use bot::ResponseCallbacks;
 use futures::StreamExt;
-use handler::ping::ping;
+use handler::{history_window::history_window_pair, ping::ping};
 use std::{env, error::Error};
 use twilight_gateway::cluster::{Cluster, ShardScheme};
 use twilight_http::Client;
@@ -23,6 +23,15 @@ impl ResponseCallbacks for Callbacks {
         self.http
             .create_message(message.channel_id.into())
             .content(&message.content)?
+            .exec()
+            .await?;
+
+        Ok(())
+    }
+
+    async fn delete_message(&self, channel_id: u64, message_id: u64) -> Result<(), Box<dyn Error>> {
+        self.http
+            .delete_message(channel_id.into(), message_id.into())
             .exec()
             .await?;
 
@@ -48,7 +57,10 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let http = Client::new(token);
 
     let mut handler = Bot::new(Callbacks { http: http.clone() });
+    let (history_window, history_window_configurator) = history_window_pair();
     handler.on_message(FnMessageHandler(ping));
+    handler.on_message(history_window);
+    handler.on_message(history_window_configurator);
 
     while let Some((_, event)) = events.next().await {
         handler.handle(event).await;
