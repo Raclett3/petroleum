@@ -5,8 +5,8 @@ edition = "2018"
 
 [dependencies]
 async-trait = "0.1"
-twilight-gateway = "0.6"
-twilight-http = "0.6"
-twilight-model = "0.6"
+twilight-gateway = "0.8"
+twilight-http = "0.8"
+twilight-model = "0.8"
 futures = "0.3"
-tokio = {version = "1.11", features = ["macros", "rt"]}
+tokio = {version = "1.15", features = ["macros", "rt", "rt-multi-thread"]}

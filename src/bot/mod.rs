@@ -29,7 +29,7 @@ impl<'a> Bot<'a> {
     pub async fn handle(&mut self, event: Event) {
         match event {
             Event::MessageCreate(msg) => {
-                let incoming = (msg.id.0, msg.0.into());
+                let incoming = (msg.id.0.into(), msg.0.into());
                 for handler in self.message_handlers.iter_mut() {
                     if let Err(error) = handler.on_message(&incoming, &self.context).await {
                         println!("[ERROR] {}", error);

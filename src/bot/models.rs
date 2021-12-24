@@ -18,7 +18,7 @@ impl Message {
 impl From<DiscordMessage> for Message {
     fn from(message: DiscordMessage) -> Self {
         Message {
-            channel_id: message.channel_id.0,
+            channel_id: message.channel_id.0.into(),
             content: message.content,
         }
     }
