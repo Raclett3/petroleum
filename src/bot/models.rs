@@ -23,3 +23,5 @@ impl From<DiscordMessage> for Message {
         }
     }
 }
+
+pub type IncomingMessage = (u64, Message);

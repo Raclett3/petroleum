@@ -1,6 +1,6 @@
-use crate::bot::Message;
+use crate::bot::{IncomingMessage, Message};
 
-pub fn ping(message: &Message) -> Option<Message> {
+pub fn ping((_, message): &IncomingMessage) -> Option<Message> {
     if message.content == "ping?" {
         Some(message.reply("pong!"))
     } else {

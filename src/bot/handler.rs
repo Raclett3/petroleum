@@ -1,4 +1,4 @@
-use super::Message;
+use super::{IncomingMessage, Message};
 use async_trait::async_trait;
 use std::error::Error;
 use std::sync::Arc;
@@ -18,18 +18,21 @@ pub struct Context {
 pub trait MessageHandler {
     async fn on_message(
         &mut self,
-        message: &Message,
+        message: &IncomingMessage,
         context: &Context,
     ) -> Result<(), Box<dyn Error>>;
 }
 
-pub struct FnMessageHandler<T: FnMut(&Message) -> Option<Message> + Send + Sync>(pub T);
+pub struct FnMessageHandler<T: FnMut(&IncomingMessage) -> Option<Message> + Send + Sync>(pub T);
 
 #[async_trait]
-impl<T: FnMut(&Message) -> Option<Message> + Send + Sync> MessageHandler for FnMessageHandler<T> {
+impl<T> MessageHandler for FnMessageHandler<T>
+where
+    T: FnMut(&IncomingMessage) -> Option<Message> + Send + Sync,
+{
     async fn on_message(
         &mut self,
-        message: &Message,
+        message: &IncomingMessage,
         context: &Context,
     ) -> Result<(), Box<dyn Error>> {
         if let Some(reply) = self.0(message) {
