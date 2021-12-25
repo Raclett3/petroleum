@@ -1,4 +1,4 @@
-use super::{IncomingMessage, Message};
+use super::{Channel, IncomingMessage, Message};
 use async_trait::async_trait;
 use std::error::Error;
 use std::sync::Arc;
@@ -11,6 +11,14 @@ pub trait ResponseCallbacks: Send + Sync {
 
     async fn delete_message(&self, _: u64, _: u64) -> Result<(), Box<dyn Error>> {
         Ok(())
+    }
+
+    async fn fetch_message(&self, _: u64, _: u64) -> Option<Message> {
+        None
+    }
+
+    async fn fetch_channel(&self, _: u64) -> Option<Channel> {
+        None
     }
 }
 
