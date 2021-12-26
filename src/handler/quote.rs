@@ -27,7 +27,7 @@ async fn message_to_quote(
             )
         })
         .unwrap_or_else(|| "https://cdn.discordapp.com/embed/avatars/0.png".to_string());
-    let now = Local::now().format("%Y/%m/%d %H:%M:%D").to_string();
+    let now = Local::now().format("%Y/%m/%d %H:%M:%S").to_string();
 
     let mut embed = Embed::new()
         .author_name(author.name)
