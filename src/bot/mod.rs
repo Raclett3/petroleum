@@ -4,7 +4,8 @@ pub mod models;
 pub use handler::*;
 pub use models::*;
 
-use std::sync::Arc;
+use diesel::PgConnection;
+use std::sync::{Arc, Mutex};
 use twilight_gateway::Event;
 
 pub struct Bot<'a> {
@@ -13,11 +14,12 @@ pub struct Bot<'a> {
 }
 
 impl<'a> Bot<'a> {
-    pub fn new<T: ResponseCallbacks + 'static>(callbacks: T) -> Self {
+    pub fn new<T: ResponseCallbacks + 'static>(callbacks: T, db_conn: PgConnection) -> Self {
         Bot {
             message_handlers: Vec::new(),
             context: Context {
                 callbacks: Arc::new(callbacks),
+                db_conn: Arc::new(Mutex::new(db_conn)),
             },
         }
     }

@@ -1,7 +1,8 @@
 use super::{Channel, IncomingMessage, Message};
 use async_trait::async_trait;
+use diesel::PgConnection;
 use std::error::Error;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 #[async_trait]
 pub trait ResponseCallbacks: Send + Sync {
@@ -24,6 +25,7 @@ pub trait ResponseCallbacks: Send + Sync {
 
 pub struct Context {
     pub callbacks: Arc<dyn ResponseCallbacks>,
+    pub db_conn: Arc<Mutex<PgConnection>>,
 }
 
 #[async_trait]
