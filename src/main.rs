@@ -7,12 +7,7 @@ mod models;
 mod schema;
 
 use async_trait::async_trait;
-use bot::Bot;
-use bot::Channel;
-use bot::Embed;
-use bot::FnMessageHandler;
-use bot::Message;
-use bot::ResponseCallbacks;
+use bot::{Bot, Channel, FnMessageHandler, Message, ResponseCallbacks};
 use diesel::{Connection, PgConnection};
 use futures::StreamExt;
 use handler::{
@@ -23,10 +18,7 @@ use handler::{
 use std::{convert::TryFrom, env, error::Error, num::NonZeroU64};
 use twilight_gateway::cluster::{Cluster, ShardScheme};
 use twilight_http::Client;
-use twilight_model::{
-    channel::embed::{Embed as DiscordEmbed, EmbedAuthor, EmbedFooter, EmbedImage},
-    gateway::Intents,
-};
+use twilight_model::gateway::Intents;
 
 struct Callbacks {
     http: Client,
@@ -35,49 +27,7 @@ struct Callbacks {
 #[async_trait]
 impl ResponseCallbacks for Callbacks {
     async fn send_message(&self, message: Message) -> Result<(), Box<dyn Error>> {
-        let embeds: Vec<_> = message
-            .embeds
-            .into_iter()
-            .map(|embed| {
-                let Embed {
-                    author_name,
-                    avatar_url,
-                    description,
-                    footer,
-                    image,
-                    ..
-                } = embed;
-                DiscordEmbed {
-                    author: author_name.map(|author_name| EmbedAuthor {
-                        icon_url: avatar_url,
-                        name: author_name,
-                        proxy_icon_url: None,
-                        url: None,
-                    }),
-                    color: None,
-                    description: description,
-                    fields: Vec::new(),
-                    footer: footer.map(|footer| EmbedFooter {
-                        icon_url: None,
-                        proxy_icon_url: None,
-                        text: footer,
-                    }),
-                    image: image.map(|image| EmbedImage {
-                        url: image,
-                        proxy_url: None,
-                        height: None,
-                        width: None,
-                    }),
-                    kind: "".to_string(),
-                    provider: None,
-                    thumbnail: None,
-                    timestamp: None,
-                    title: None,
-                    url: None,
-                    video: None,
-                }
-            })
-            .collect();
+        let embeds: Vec<_> = message.embeds.into_iter().map(Into::into).collect();
 
         self.http
             .create_message(NonZeroU64::try_from(message.channel_id).unwrap().into())
