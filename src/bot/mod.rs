@@ -8,12 +8,12 @@ use diesel::PgConnection;
 use std::sync::{Arc, Mutex};
 use twilight_gateway::Event;
 
-pub struct Bot<'a> {
-    message_handlers: Vec<Box<dyn MessageHandler + 'a>>,
+pub struct Bot {
+    message_handlers: Vec<Box<dyn MessageHandler>>,
     context: Context,
 }
 
-impl<'a> Bot<'a> {
+impl Bot {
     pub fn new<T: ResponseCallbacks + 'static>(callbacks: T, db_conn: PgConnection) -> Self {
         Bot {
             message_handlers: Vec::new(),
@@ -24,7 +24,7 @@ impl<'a> Bot<'a> {
         }
     }
 
-    pub fn on_message(&mut self, handler: impl MessageHandler + 'a) {
+    pub fn on_message(&mut self, handler: impl MessageHandler + 'static) {
         self.message_handlers.push(Box::new(handler))
     }
 
